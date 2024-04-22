@@ -61,9 +61,23 @@ modules:
       - frontend.zip
       name: frontend
       target-path: resources/
+    - artifacts:
+      - project2.zip
+      name: project2
+      target-path: resources/
 - name: frontend
   type: html5
   path: app/frontend
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+- name: project2
+  type: html5
+  path: app/project2
   build-parameters:
     build-result: dist
     builder: custom
@@ -105,12 +119,29 @@ resources:
             ProxyType: Internet
             Type: HTTP
             URL: https://ui5.sap.com
+          - Authentication: NoAuthentication
+            HTML5.DynamicDestination: true
+            HTML5.ForwardAuthToken: true
+            Name: hana-app-api
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://${appname}.${default-domain}
+          - Authentication: NoAuthentication
+            HTML5.DynamicDestination: true
+            HTML5.ForwardAuthToken: true
+            Name: MyHANAAppNew-srv-api
+            ProxyType: Internet
+            Type: HTTP
+            URL: ~{srv-api/srv-url}
           existing_destinations_policy: update
       version: 1.0.0
     service: destination
     service-name: MyHANAAppNew-destination-service
     service-plan: lite
+  requires:
+  - name: srv-api
 parameters:
+  appname: unique-0b908765
   deploy_mode: html5-repo
   enable-parallel-deployments: true
 build-parameters:
