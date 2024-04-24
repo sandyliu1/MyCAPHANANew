@@ -15,10 +15,14 @@ modules:
       srv-url: ${default-url}
   parameters:
     buildpack: nodejs_buildpack
-    readiness-health-check-http-endpoint: /health
-    readiness-health-check-type: http
+    host: ${appname}
+    memory: 256M
+    disk-quota: 512M
+    # readiness-health-check-http-endpoint: /health
+    # readiness-health-check-type: http
   build-parameters:
     builder: npm
+    ignore: [".env", "node_modules/"]
 - name: MyHANAAppNew-db-deployer
   type: hdb
   path: gen/db
@@ -26,27 +30,27 @@ modules:
   - name: MyHANAAppNew-db
   parameters:
     buildpack: nodejs_buildpack
-- name: MyHANAAppNew
-  type: approuter.nodejs
-  path: app/router
-  requires:
-  - name: srv-api
-    group: destinations
-    properties:
-      forwardAuthToken: true
-      name: srv-api
-      url: ~{srv-url}
-  - name: MyHANAAppNew-auth
-  - name: MyHANAAppNew-destination-service
-    group: destinations
-    properties:
-      forwardAuthToken: false
-      name: ui5
-      url: https://ui5.sap.com
-  parameters:
-    disk-quota: 256M
-    keep-existing-routes: true
-    memory: 256M
+# - name: MyHANAAppNew
+#   type: approuter.nodejs
+#   path: app/router
+#   requires:
+#   - name: srv-api
+#     group: destinations
+#     properties:
+#       forwardAuthToken: true
+#       name: srv-api
+#       url: ~{srv-url}
+#   - name: MyHANAAppNew-auth
+#   - name: MyHANAAppNew-destination-service
+#     group: destinations
+#     properties:
+#       forwardAuthToken: false
+#       name: ui5
+#       url: https://ui5.sap.com
+#   parameters:
+#     disk-quota: 256M
+#     keep-existing-routes: true
+#     memory: 256M
 - name: MyHANAAppNew-app-content
   type: com.sap.application.content
   path: .
@@ -54,6 +58,9 @@ modules:
   - name: MyHANAAppNew-repo-host
     parameters:
       content-target: true
+  # - name: MyHANAAppNew-destination-service
+  #   parameters:
+  #     content-target: true
   build-parameters:
     build-result: resources
     requires:
@@ -85,6 +92,38 @@ modules:
     - npm install
     - npm run build:cf
     supported-platforms: []
+- name: MyHANAAppNew-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: MyHANAAppNew-destination-service
+    parameters:
+      content-target: true
+  - name: MyHANAAppNew-repo-host
+    parameters:
+      service-key:
+        name: MyHANAAppNew-repo-host-key
+  - name: MyHANAAppNew-auth
+    parameters:
+      service-key:
+        name: MyHANAAppNew-auth-key
+  parameters:
+    memory: 256M
+    disk-quota: 512M
+    content:
+      instance:
+        destinations:
+        - Name: managedRouterCapProject_MyHANAAppNewProject_html_repo_host
+          ServiceInstanceName: MyHANAAppNew-html5-srv
+          ServiceKeyName: MyHANAAppNew-repo-host-key
+          sap.cloud.service: managedRouterCapProject
+        - Authentication: OAuth2UserTokenExchange
+          Name: managedRouterCapProject_uaa_managedAppCAPProject
+          ServiceInstanceName: MyHANAAppNew-xsuaa-service
+          ServiceKeyName: MyHANAAppNew-autht-key
+          sap.cloud.service: managedRouterCapProject
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
 resources:
 - name: MyHANAAppNew-auth
   type: org.cloudfoundry.managed-service
@@ -94,12 +133,20 @@ resources:
       xsappname: MyHANAAppNew-${org}-${space}
     path: ./xs-security.json
     service: xsuaa
+    service-name: MyHANAAppNew-xsuaa-service
     service-plan: application
 - name: MyHANAAppNew-db
   type: com.sap.xs.hdi-container
   parameters:
     service: hana
     service-plan: hdi-shared
+
+# - name: MyHANAAppNew-repo-runtime
+#   type: org.cloudfoundry.managed-service
+#   parameters:
+#     service: html5-apps-repo
+#     service-plan: app-runtime
+
 - name: MyHANAAppNew-repo-host
   type: org.cloudfoundry.managed-service
   parameters:
@@ -110,7 +157,7 @@ resources:
   type: org.cloudfoundry.managed-service
   parameters:
     config:
-      HTML5Runtime_enabled: false
+      HTML5Runtime_enabled: true
       init_data:
         instance:
           destinations:
