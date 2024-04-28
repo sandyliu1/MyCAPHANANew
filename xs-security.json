@@ -1,5 +1,5 @@
 {
-  "xsappname": "MyHANAAppNew-xsuaa-service",
+  "xsappname": "myhanaappnew",
   "tenant-mode": "dedicated",
   "description": "Security profile of called application",
   "scopes": [
@@ -16,5 +16,13 @@
         "uaa.user"
       ]
     }
-  ]
+  ],
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "https://*.hana.ondemand.com/**",
+      "https://*.applicationstudio.cloud.sap/**",
+      "http://localhost:*/login/callback"
+    ]
+  },
+  "authorities-inheritance": false
 }

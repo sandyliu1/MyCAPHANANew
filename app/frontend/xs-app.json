@@ -2,11 +2,12 @@
   "welcomeFile": "/index.html",
   "authenticationMethod": "route",
   "routes": [
-    {
-      "source": "/catalog/(.*)",
-      "destination": "hana-app-api",
-      "csrfProtection": true,
-      "authenticationType": "xsuaa"
+  {
+    "source": "^/odata/(.*)$",
+    "target": "/odata/$1",
+    "destination": "hana-app-api",
+    "authenticationType": "xsuaa",
+    "csrfProtection": false
   },
     {
       "source": "^/resources/(.*)$",
